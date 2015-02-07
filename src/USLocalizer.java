@@ -25,7 +25,7 @@ public class USLocalizer {
 		
 		if (locType == LocalizationType.FALLING_EDGE) {
 			// rotate the robot until it sees no wall
-			
+			odo.getNavigation().travelTo(30, 30);
 			// keep rotating until the robot sees a wall, then latch the angle
 			
 			// switch direction and wait until it sees no wall
@@ -37,6 +37,7 @@ public class USLocalizer {
 			
 			// update the odometer position (example to follow:)
 			odo.setPosition(new double [] {0.0, 0.0, 0.0}, new boolean [] {true, true, true});
+			return;
 		} else {
 			/*
 			 * The robot should turn until it sees the wall, then look for the
