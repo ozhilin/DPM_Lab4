@@ -42,8 +42,7 @@ public class Driver {
 	 * 	Move the robot forward a specified distance (in cm)
 	 */
 	public void move(double distance) {
-		leftMotor.setSpeed(FWD_SPEED);
-		rightMotor.setSpeed(FWD_SPEED);
+		setSpeed(FWD_SPEED);
 		
 		leftMotor.rotate(convertDistance(radius, distance), true);
 		rightMotor.rotate(convertDistance(radius, distance), true);
@@ -55,8 +54,7 @@ public class Driver {
 	 */
 	public void turn(Direction direction, double angle) {
 		stop();
-		leftMotor.setSpeed(TURN_SPEED);
-		rightMotor.setSpeed(TURN_SPEED);
+		setSpeed(TURN_SPEED);
 		switch (direction) {
 			case LEFT:
 				leftMotor.rotate(-convertAngle(radius, width, angle), true);
@@ -70,6 +68,24 @@ public class Driver {
 			
 	}
 	
+	/*
+	 * Tells the robot to start turning in a direction, stop will have to be 
+	 * called to stop this turn
+	 */
+	public void continuousTurn(Direction direction) {
+		stop();
+		setSpeed(TURN_SPEED);
+		switch (direction) {
+		case LEFT:
+			leftMotor.backward();
+			rightMotor.forward();
+			break;
+		case RIGHT:
+			rightMotor.backward();
+			leftMotor.forward();
+			break;
+	}
+	}
 	/*
 	 * 	Stops the robot and floats the motors 
 	 */
@@ -91,6 +107,10 @@ public class Driver {
 		move(AVOID_DISTANCE);
 	}
 	
+	private void setSpeed(int speed) {
+		leftMotor.setSpeed(speed);
+		rightMotor.setSpeed(speed);
+	}
 	// The following two utility methods come from the provided SquareDriver class in lab 2.
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
