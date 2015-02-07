@@ -2,12 +2,12 @@ import lejos.nxt.LightSensor;
 
 public class LightLocalizer {
 	private Odometer odo;
-	private TwoWheeledRobot robot;
+//	private TwoWheeledRobot robot;
 	private LightSensor ls;
 	
 	public LightLocalizer(Odometer odo, LightSensor ls) {
 		this.odo = odo;
-		this.robot = odo.getTwoWheeledRobot();
+		//this.robot = odo.getTwoWheeledRobot();
 		this.ls = ls;
 		
 		// turn on the light

@@ -1,103 +1,188 @@
-import lejos.util.Timer;
-import lejos.util.TimerListener;
+import lejos.nxt.*;
 
-public class Odometer implements TimerListener {
-	public static final int DEFAULT_PERIOD = 25;
-	private TwoWheeledRobot robot;
-	private Timer odometerTimer;
-	private Navigation nav;
-	// position data
-	private Object lock;
+/*
+ * Lab 3 -- Navigation
+ * ECSE 211: Design Principles and Methods
+ * 
+ * Group 48
+ * Michael Maatouk:	260554267
+ * Oleg Zhilin		260581713
+ * 
+ * Odometer.java:	Keeps track of position and orientation of robot.
+ */
+
+public class Odometer extends Thread {
+	// robot position
 	private double x, y, theta;
-	private double [] oldDH, dDH;
+
+	// Robot wheels
+	private NXTRegulatedMotor leftMotor = Motor.A;
+	private NXTRegulatedMotor rightMotor = Motor.B;
+	private enum Side {
+		LEFT, RIGHT
+	}
+
+	// Calculation data
+	private double radius = 2.1;
+	private double width = 16.3;
 	
-	public Odometer(TwoWheeledRobot robot, int period, boolean start) {
-		// initialise variables
-		this.robot = robot;
-		this.nav = new Navigation(this);
-		odometerTimer = new Timer(period, this);
+	private double rightTacho = 0;
+	private double leftTacho = 0;
+	
+	// odometer update period, in ms
+	private static final long ODOMETER_PERIOD = 15;
+
+	// lock object for mutual exclusion
+	private Object lock;
+
+	// default constructor
+	public Odometer() {
 		x = 0.0;
 		y = 0.0;
-		theta = 0.0;
-		oldDH = new double [2];
-		dDH = new double [2];
+		theta = Math.toRadians(90.0);
 		lock = new Object();
-		
-		// start the odometer immediately, if necessary
-		if (start)
-			odometerTimer.start();
 	}
-	
-	public Odometer(TwoWheeledRobot robot) {
-		this(robot, DEFAULT_PERIOD, false);
-	}
-	
-	public Odometer(TwoWheeledRobot robot, boolean start) {
-		this(robot, DEFAULT_PERIOD, start);
-	}
-	
-	public Odometer(TwoWheeledRobot robot, int period) {
-		this(robot, period, false);
-	}
-	
-	public void timedOut() {
-		robot.getDisplacementAndHeading(dDH);
-		dDH[0] -= oldDH[0];
-		dDH[1] -= oldDH[1];
-		
-		// update the position in a critical region
-		synchronized (lock) {
-			theta += dDH[1];
-			theta = fixDegAngle(theta);
+
+	// run method (required for Thread)
+	public void run() {
+		long updateStart, updateEnd;
+
+		while (true) {
+			updateStart = System.currentTimeMillis();
+			// put (some of) your odometer code here
+
+			double deltaLeftTacho = getDeltaTacho(Side.LEFT);
+			double deltaRightTacho = getDeltaTacho(Side.RIGHT);
 			
-			x += dDH[0] * Math.sin(Math.toRadians(theta));
-			y += dDH[0] * Math.cos(Math.toRadians(theta));
+			// Called delta C in tutorial slides
+			double arcDisplacement = (deltaRightTacho + deltaLeftTacho)*radius/2;
+			double angularDisplacement = (deltaRightTacho - deltaLeftTacho)*radius/width;
+			
+			synchronized (lock) {
+				// don't use the variables x, y, or theta anywhere but here!
+				x += arcDisplacement*Math.cos(theta + angularDisplacement/2);
+				y += arcDisplacement*Math.sin(theta + angularDisplacement/2);
+				theta += angularDisplacement;
+				theta %= Math.PI*2;
+				// Keep the angle between [0,360]
+				if (theta < 0) {
+					theta += Math.PI*2;
+				}
+				displayCoordinates(x, y, theta);
+			}
+
+			// this ensures that the odometer only runs once every period
+			updateEnd = System.currentTimeMillis();
+			if (updateEnd - updateStart < ODOMETER_PERIOD) {
+				try {
+					Thread.sleep(ODOMETER_PERIOD - (updateEnd - updateStart));
+				} catch (InterruptedException e) {
+					// there is nothing to be done here because it is not
+					// expected that the odometer will be interrupted by
+					// another thread
+				}
+			}
 		}
-		
-		oldDH[0] += dDH[0];
-		oldDH[1] += dDH[1];
 	}
-	
+
+	// Compute the difference in the tachometer value since the last reading
+	private double getDeltaTacho(Side side) {
+		double tachoCurrent; 
+		double delta = 0;
+		
+		switch (side) {
+			case LEFT:
+				// Get the current tacho value
+				tachoCurrent = leftMotor.getTachoCount() * Math.PI/180;
+			    delta = tachoCurrent - leftTacho;
+				leftTacho = tachoCurrent;
+				break;
+			case RIGHT:
+				 tachoCurrent = rightMotor.getTachoCount() * Math.PI/180;
+				 delta = tachoCurrent - rightTacho;
+				rightTacho = tachoCurrent;
+				break;
+		}
+		return delta; 
+	}
+
 	// accessors
-	public void getPosition(double [] pos) {
+	public void getPosition(double[] position, boolean[] update) {
+		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
-			pos[0] = x;
-			pos[1] = y;
-			pos[2] = theta;
+			if (update[0])
+				position[0] = x;
+			if (update[1])
+				position[1] = y;
+			if (update[2])
+				position[2] = theta;
 		}
 	}
-	
-	public TwoWheeledRobot getTwoWheeledRobot() {
-		return robot;
+
+	public double getX() {
+		double result;
+
+		synchronized (lock) {
+			result = x;
+		}
+
+		return result;
 	}
-	
-	public Navigation getNavigation() {
-		return this.nav;
+
+	public double getY() {
+		double result;
+
+		synchronized (lock) {
+			result = y;
+		}
+
+		return result;
 	}
-	
+
+	public double getTheta() {
+		double result;
+
+		synchronized (lock) {
+			result = theta;
+		}
+
+		return result;
+	}
+
 	// mutators
-	public void setPosition(double [] pos, boolean [] update) {
+	public void setPosition(double[] position, boolean[] update) {
+		// ensure that the values don't change while the odometer is running
 		synchronized (lock) {
-			if (update[0]) x = pos[0];
-			if (update[1]) y = pos[1];
-			if (update[2]) theta = pos[2];
+			if (update[0])
+				x = position[0];
+			if (update[1])
+				y = position[1];
+			if (update[2])
+				theta = position[2];
+		}
+	}
+
+	public void setX(double x) {
+		synchronized (lock) {
+			this.x = x;
+		}
+	}
+
+	public void setY(double y) {
+		synchronized (lock) {
+			this.y = y;
+		}
+	}
+
+	public void setTheta(double theta) {
+		synchronized (lock) {
+			this.theta = theta;
 		}
 	}
 	
-	// static 'helper' methods
-	public static double fixDegAngle(double angle) {		
-		if (angle < 0.0)
-			angle = 360.0 + (angle % 360.0);
-		
-		return angle % 360.0;
-	}
-	
-	public static double minimumAngleFromTo(double a, double b) {
-		double d = fixDegAngle(b - a);
-		
-		if (d < 180.0)
-			return d;
-		else
-			return d - 360.0;
+	private void displayCoordinates(double x, double y, double theta) {
+		LCD.drawString("X: " + x, 0, 1);
+		LCD.drawString("Y: " + y, 0, 2);
+		LCD.drawString("T: " + Math.toDegrees(theta), 0, 3);
 	}
 }
