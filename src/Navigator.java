@@ -18,7 +18,7 @@ public class Navigator {
 	private Driver driver;
 	
 	private double POS_ERROR = 0.5;		// in cm		
-	private double ANGLE_ERROR = 10; 	// in degrees
+	private double ANGLE_ERROR = 6; 	// in degrees
 	
 	public Navigator(Odometer odometer) {
 		this.odometer = odometer;
@@ -60,8 +60,7 @@ public class Navigator {
 			toDestination = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
 			driver.move(toDestination);
 		} while (Math.abs(xDistance) > POS_ERROR || Math.abs(yDistance) > POS_ERROR);
-		
-		Sound.beep(); // Beep confirms that the robot has arrived to destination
+		Sound.twoBeeps();
 	}
 	
 	/*
@@ -82,13 +81,14 @@ public class Navigator {
 		while (Math.abs(angleError) > ANGLE_ERROR) {
 			currentAngle = Math.toDegrees(odometer.getTheta());
 			angleError = theta - currentAngle;
+			
 			/*	
 			 * 	During testing, it was noticed that the robot always leans left 
 			 * 	when going straight.
 			 *	This compensation factor corrects this deviation.
 			 */
+			LCD.drawString("AngleError " + angleError, 0, 5);
 			int leftCompensationFactor = -5;
-			
 			if (angleError < -180.0) {
 				driver.turn(Driver.Direction.LEFT, 360 - Math.abs(angleError)/* + leftCompensationFactor*/);
 			} else if (angleError < 0.0) {

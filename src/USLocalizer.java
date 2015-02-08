@@ -66,7 +66,7 @@ public class USLocalizer {
 				
 			}
 			
-			angleA =Math.toDegrees( odo.getTheta());
+			angleA = Math.toDegrees( odo.getTheta());
 			
 			// switch direction and wait until it sees no wall
 			rotationStep =2 ;
@@ -190,13 +190,9 @@ public class USLocalizer {
 		LCD.drawString( "angleA: " +  angleA + "", 0, 4);
 		LCD.drawString("angnleB: " + angleB + "", 0, 5);
 		LCD.drawString("dChange: "+dChange, 0, 7);
+		
 		odo.setTheta((odo.getTheta() + Math.toRadians(dChange))%360 );
 		
-		
-		navigator.turnTo(90);	
-	   
-		// update the odometer position (example to follow:)
-		//odo.setPosition(new double [] {0.0, 0.0, 0.0}, new boolean [] {true, true, true});
 		return;
 	}
 	

@@ -49,7 +49,7 @@ public class Driver {
 	}
 	
 	/*
-	 * 	Turns the robot in the specified direction at a desired angle (in degrees)
+	 * 	Turns the robot in the specified direction by a desired angle (in degrees)
 	 * 	Raw turning function, does not read any value from the odometer.
 	 */
 	public void turn(Direction direction, double angle) {
