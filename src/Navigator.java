@@ -2,7 +2,7 @@ import lejos.nxt.LCD;
 import lejos.nxt.Sound;
 
 /*
- * Lab 3 -- Navigation
+ * Lab 4 -- Localization
  * ECSE 211: Design Principles and Methods
  * 
  * Group 48
@@ -18,7 +18,7 @@ public class Navigator {
 	private Driver driver;
 	
 	private double POS_ERROR = 0.5;		// in cm		
-	private double ANGLE_ERROR = 6; 	// in degrees
+	private double ANGLE_ERROR = 3; 	// in degrees
 	
 	public Navigator(Odometer odometer) {
 		this.odometer = odometer;
@@ -88,15 +88,16 @@ public class Navigator {
 			 *	This compensation factor corrects this deviation.
 			 */
 			LCD.drawString("AngleError " + angleError, 0, 5);
-			int leftCompensationFactor = -5;
+
+			
 			if (angleError < -180.0) {
-				driver.turn(Driver.Direction.LEFT, 360 - Math.abs(angleError)/* + leftCompensationFactor*/);
+				driver.turn(Driver.Direction.LEFT, 360 - Math.abs(angleError));
 			} else if (angleError < 0.0) {
 				driver.turn(Driver.Direction.RIGHT, Math.abs(angleError));
 			} else if (angleError > 180.0) {
 				driver.turn(Driver.Direction.RIGHT, 360 - angleError);
 			} else {
-				driver.turn(Driver.Direction.LEFT, angleError/* + leftCompensationFactor*/);
+				driver.turn(Driver.Direction.LEFT, angleError);
 			}
 		} 
 	}

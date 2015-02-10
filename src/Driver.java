@@ -2,7 +2,7 @@ import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 
 /*
- * Lab 3 -- Navigation
+ * Lab 4 -- Localization
  * ECSE 211: Design Principles and Methods
  * 
  * Group 48
@@ -21,16 +21,11 @@ public class Driver {
 	private int FWD_SPEED = 200;
 	private int FWD_ACCEL = 200;
 	
-	private double AVOID_DISTANCE = 30;
-	private double AVOID_RTURN = 90;
-	private double AVOID_LTURN = 85;
-	
 	public enum Direction {
-		LEFT, RIGHT
+		LEFT, RIGHT, FORWARD, BACKWARD
 	}
 	
 	public Driver() {
-		
 		leftMotor.resetTachoCount();
 		rightMotor.resetTachoCount();
 		
@@ -64,8 +59,34 @@ public class Driver {
 				leftMotor.rotate(convertAngle(radius, width, angle), true);
 				rightMotor.rotate(-convertAngle(radius, width, angle), false);
 				break;
+			default:	// When direction provided is FORWARD/BACKWARD
+				break;
 		}
 			
+	}
+	
+	/*
+	 * 	Moves forward continuously until driver.stop() is called.
+	 */
+	public void continuousMove(Direction direction) {
+		// Go slowly enough to detect line
+		final int SLOW_COEFFICIENT = 20;
+		leftMotor.setSpeed(FWD_SPEED/SLOW_COEFFICIENT);
+		rightMotor.setSpeed(FWD_SPEED/SLOW_COEFFICIENT);
+		switch (direction) {
+		case FORWARD:
+			leftMotor.forward();
+			rightMotor.forward();
+			break;
+		case BACKWARD:
+			leftMotor.backward();
+			rightMotor.backward();
+			break;
+		default:		// Called if LEFT or RIGHT are provided as arguments
+			break;
+		}
+		leftMotor.setSpeed(FWD_SPEED);
+		rightMotor.setSpeed(FWD_SPEED);
 	}
 	
 	/*
@@ -84,7 +105,9 @@ public class Driver {
 			rightMotor.backward();
 			leftMotor.forward();
 			break;
-	}
+		default:	// When direction provided is FORWARD/BACKWARD
+			break;
+		}
 	}
 	/*
 	 * 	Stops the robot and floats the motors 
@@ -97,20 +120,11 @@ public class Driver {
 		rightMotor.stop(false);
 	}
 	
-	/*
-	 * 	Dodges an obstacle by following a predetermined path.
-	 */
-	private void avoid() {
-		turn(Direction.RIGHT, AVOID_RTURN);
-		move(AVOID_DISTANCE);
-		turn(Direction.LEFT, AVOID_LTURN);
-		move(AVOID_DISTANCE);
-	}
-	
 	private void setSpeed(int speed) {
 		leftMotor.setSpeed(speed);
 		rightMotor.setSpeed(speed);
 	}
+	
 	// The following two utility methods come from the provided SquareDriver class in lab 2.
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
