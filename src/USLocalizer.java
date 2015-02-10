@@ -37,7 +37,10 @@ public class USLocalizer {
 		int rotationStep =1; // defining the different stages of the process  
 		
 		if (locType == LocalizationType.FALLING_EDGE) {
-			// rotate the robot until it sees no wall
+			
+			//Start with a clockwise rotation
+			//if we start facing a wall then
+			// rotate the robot until it doesn't see a wall
 		   
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
@@ -47,7 +50,7 @@ public class USLocalizer {
 		
 			driver.stop();
 			
-			//to not have the previous wall detection again 
+			//to not have the previous wall detection interfere with the next one 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -68,16 +71,18 @@ public class USLocalizer {
 			
 			angleA = Math.toDegrees( odo.getTheta());
 			
-			// switch direction and wait until it sees no wall
-			rotationStep =2 ;
+			
+			rotationStep =2 ;// second stage of the rotation
+			
+			
+			//CounterClockwise rotation 
+			// Turn until it doesn't see a wall
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
 			while(Distance < noWall && rotationStep == 2){
 				Distance = getFilteredData();
 			}
 	 
-			
-			
 			
 			// keep rotating until the robot sees a wall, then latch the angle
 			Distance = getFilteredData();
@@ -89,33 +94,27 @@ public class USLocalizer {
 			driver.stop();
 			angleB = Math.toDegrees(odo.getTheta());
 			
-			 
+			//calculations to adjust the odometer  
 			   if(angleA < angleB){
 				   dChange = (45 -((angleA+angleB)/2));
-				   
-			   Sound.beep();
+		
 			   }
 			   else {
 				   dChange = (225 -((angleA+angleB)/2));
-				  
-			   Sound.twoBeeps();
+	
 			   } 
 			   
 		} else {
-			/*
-			 * The robot should turn until it sees the wall, then look for the
-			 * "rising edges:" the points where it no longer sees the wall.
-			 * This is very similar to the FALLING_EDGE routine, but the robot
-			 * will face toward the wall for most of it.
-			 */
 			
+			// Start with a clockwise rotation
+			// If we started by not facing a wall
 			//turn till it sees a wall 
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
 			while(Distance >= noWall && rotationStep == 1){
 				Distance = getFilteredData();
 			}
-			Sound.beep(); 
+			
 			
 			//to not have the previous wall detection again 
 			try {
@@ -126,9 +125,8 @@ public class USLocalizer {
 			}
 		
 			
-			
-		
-			 // keep rotating until the robot doesn't see a wall, then latch the angle
+			 // keep rotating until the robot till it doesn't see a wall
+			//then latch the angle
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
 			
@@ -138,18 +136,18 @@ public class USLocalizer {
 			}
 			
 			angleA = Math.toDegrees(odo.getTheta());
-			LCD.drawString(angleA+"", 0, 4);
 			
-			// switch direction and wait until it sees no wall
+			//CounterClockwise rotation
+			// turn until it sees a wall again 
 			rotationStep =2 ;
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
 			while(Distance >= noWall && rotationStep == 2){
 				Distance = getFilteredData();
 			}
-		  Sound.beep(); 
 			
-		//to not have the previous wall detection again 
+		    //to not have the previous wall detection interfere with
+			//the next one 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -157,7 +155,9 @@ public class USLocalizer {
 				e.printStackTrace();
 			}
 			
-			// keep rotating until the robot sees a wall, then latch the angle
+			
+			// keep rotating until it doesn't see a wall
+			//then latch the angle
 			Distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
 			while(Distance < noWall && rotationStep == 2){
@@ -166,34 +166,23 @@ public class USLocalizer {
 			}
 			driver.stop();
 			angleB = Math.toDegrees(odo.getTheta());
-			LCD.drawString(angleB + "", 0, 5);
-			
-			 
+
+			//calculations to adjust the odometer
 			   if(angleA < angleB){
 				   dChange = (225 -((angleA+angleB)/2));
-				   
-			   Sound.beep();
+	
 			   }
 			   else {
 				   dChange = (45 -((angleA+angleB)/2));
-				  
-			   Sound.twoBeeps();
+
 			   } 
 			   
 
 		}
 		
-		// angleA is clockwise from angleB, so assume the average of the
-		// angles to the right of angleB is 45 degrees past 'north'
 	
-	   	//double turn = 360-dChange
-		LCD.drawString( "angleA: " +  angleA + "", 0, 4);
-		LCD.drawString("angnleB: " + angleB + "", 0, 5);
-		LCD.drawString("dChange: "+dChange, 0, 7);
-		
 		odo.setTheta((odo.getTheta() + Math.toRadians(dChange))%360 );
 		
-		return;
 	}
 	
 	
