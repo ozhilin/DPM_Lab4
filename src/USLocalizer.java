@@ -1,8 +1,4 @@
 
-import lejos.nxt.LCD;
-import lejos.nxt.Motor;
-import lejos.nxt.NXTRegulatedMotor;
-import lejos.nxt.Sound;
 import lejos.nxt.UltrasonicSensor;
 
 public class USLocalizer {
@@ -11,30 +7,25 @@ public class USLocalizer {
 
 	private Odometer odo;
 	private UltrasonicSensor us;
-	private Navigator navigator;
 	private Driver driver; 
 	private LocalizationType locType;
-	private NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.B;
 	private int noWall= 36; 
-	private int Distance; 
+	private int distance; 
 	public enum Direction {
 		LEFT, RIGHT
 	}
 	
-	public USLocalizer(Odometer odo, UltrasonicSensor us, Driver driver, Navigator navigator, LocalizationType locType) {
+	public USLocalizer(Odometer odo, UltrasonicSensor us, Driver driver, LocalizationType locType) {
 		this.odo = odo;
 		this.us = us;
 		this.locType = locType;
 		this.driver = driver;
-		this.navigator= navigator;
 		// switch off the ultrasonic sensor
 		us.off();
 	}
 	
 	public void doLocalization() {
-		double [] pos = new double [3];
-		double angleA, angleB, dChange;
-		int rotationStep =1; // defining the different stages of the process  
+		double angleA, angleB, dChange;  
 		
 		if (locType == LocalizationType.FALLING_EDGE) {
 			
@@ -42,10 +33,10 @@ public class USLocalizer {
 			//if we start facing a wall then
 			// rotate the robot until it doesn't see a wall
 		   
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
-			while(Distance < noWall && rotationStep == 1){
-				Distance = getFilteredData();
+			while(distance < noWall){
+				distance = getFilteredData();
 			}
 		
 			driver.stop();
@@ -61,35 +52,27 @@ public class USLocalizer {
 			
 		
 			 // keep rotating until the robot sees a wall, then latch the angle
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
 			
-			while(Distance >= noWall && rotationStep == 1){
-				Distance = getFilteredData();
-				
+			while(distance >= noWall){
+				distance = getFilteredData();
 			}
-			
 			angleA = Math.toDegrees( odo.getTheta());
-			
-			
-			rotationStep =2 ;// second stage of the rotation
-			
 			
 			//CounterClockwise rotation 
 			// Turn until it doesn't see a wall
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
-			while(Distance < noWall && rotationStep == 2){
-				Distance = getFilteredData();
+			while(distance < noWall){
+				distance = getFilteredData();
 			}
 	 
-			
 			// keep rotating until the robot sees a wall, then latch the angle
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
-			while(Distance >= noWall && rotationStep == 2){
-				Distance = getFilteredData();
-				
+			while(distance >= noWall){
+				distance = getFilteredData();
 			}
 			driver.stop();
 			angleB = Math.toDegrees(odo.getTheta());
@@ -97,11 +80,9 @@ public class USLocalizer {
 			//calculations to adjust the odometer  
 			   if(angleA < angleB){
 				   dChange = (45 -((angleA+angleB)/2));
-		
 			   }
 			   else {
 				   dChange = (225 -((angleA+angleB)/2));
-	
 			   } 
 			   
 		} else {
@@ -109,10 +90,10 @@ public class USLocalizer {
 			// Start with a clockwise rotation
 			// If we started by not facing a wall
 			//turn till it sees a wall 
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
-			while(Distance >= noWall && rotationStep == 1){
-				Distance = getFilteredData();
+			while(distance >= noWall){
+				distance = getFilteredData();
 			}
 			
 			
@@ -127,23 +108,21 @@ public class USLocalizer {
 			
 			 // keep rotating until the robot till it doesn't see a wall
 			//then latch the angle
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.RIGHT);
 			
-			while(Distance < noWall && rotationStep == 1){
-				Distance = getFilteredData();
-				
+			while(distance < noWall){
+				distance = getFilteredData();		
 			}
 			
 			angleA = Math.toDegrees(odo.getTheta());
 			
 			//CounterClockwise rotation
 			// turn until it sees a wall again 
-			rotationStep =2 ;
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
-			while(Distance >= noWall && rotationStep == 2){
-				Distance = getFilteredData();
+			while(distance >= noWall){
+				distance = getFilteredData();
 			}
 			
 		    //to not have the previous wall detection interfere with
@@ -158,11 +137,10 @@ public class USLocalizer {
 			
 			// keep rotating until it doesn't see a wall
 			//then latch the angle
-			Distance = getFilteredData();
+			distance = getFilteredData();
 			driver.continuousTurn(Driver.Direction.LEFT);
-			while(Distance < noWall && rotationStep == 2){
-				Distance = getFilteredData();
-				
+			while(distance < noWall){
+				distance = getFilteredData();	
 			}
 			driver.stop();
 			angleB = Math.toDegrees(odo.getTheta());
@@ -170,14 +148,10 @@ public class USLocalizer {
 			//calculations to adjust the odometer
 			   if(angleA < angleB){
 				   dChange = (225 -((angleA+angleB)/2));
-	
 			   }
 			   else {
 				   dChange = (45 -((angleA+angleB)/2));
-
 			   } 
-			   
-
 		}
 		
 	

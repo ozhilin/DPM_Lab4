@@ -24,7 +24,7 @@ public class Odometer extends Thread {
 
 	// Calculation data
 	private double radius = 2.1;
-	private double width = 16.3;
+	private double width = 16.1;	// 16.3
 	
 	private double rightTacho = 0;
 	private double leftTacho = 0;

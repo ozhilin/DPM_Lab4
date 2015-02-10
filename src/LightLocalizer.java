@@ -20,8 +20,8 @@ public class LightLocalizer {
 	private Driver driver;
 	private Navigator nav;
 	
-	private int LIGHT_THRESHOLD = 140;
-	private int SENSOR_LENGTH = -12;
+	private int LIGHT_THRESHOLD = 150;
+	private int SENSOR_LENGTH = 12;
 	
 	public LightLocalizer(Odometer odo, LightDetector ls2, Driver driver, Navigator nav) {
 		this.odo = odo;
@@ -38,6 +38,7 @@ public class LightLocalizer {
 		
 		lineLocations = recordLines();
 		
+		//correctTheta(lineLocations);
 		correctXY(lineLocations);
 		
 		nav.travelTo(0, 0);
@@ -51,11 +52,14 @@ public class LightLocalizer {
 	 * 	in a single rotation.
 	 */
 	private void driveToLocalizationPosition() {
+		// Adjust y coordinate
 		nav.turnTo(45);
 		driver.continuousMove(Driver.Direction.FORWARD);
 		waitForBlackLine();
 		driver.stop();
-		goBack();
+		odo.setY(SENSOR_LENGTH);
+		odo.setX(SENSOR_LENGTH);
+		
 	}
 	
 	/*
@@ -98,39 +102,23 @@ public class LightLocalizer {
 		Sound.beep();
 	}
 	
-	private void goBack() {
-		driver.continuousMove(Driver.Direction.BACKWARD);
-		try {
-			Thread.sleep(2500);
-		} catch (InterruptedException e) {
-			// Do nothing
-		}
-	}
 	/*
 	 * 	Computes the correct coordinates of the robot.
 	 */
 	private void correctXY(double[] lineLocations) {
-		double x = SENSOR_LENGTH * Math.cos((lineLocations[2] - lineLocations[0]) / 2);
-		double y = SENSOR_LENGTH * Math.cos((lineLocations[3] - lineLocations[1]) / 2);
+		double x = -SENSOR_LENGTH * Math.cos((lineLocations[2] - lineLocations[0]) / 2);
+		double y = -SENSOR_LENGTH * Math.cos((lineLocations[3] - lineLocations[1]) / 2);
 		
 		odo.setX(x);
 		odo.setY(y);
 	}
 	
-	/*
-	 * 	Computes the correct orientation of the robot.
-	 */
 	private void correctTheta(double[] lineLocations) {
-		double thetaX = Math.toDegrees(lineLocations[2] - lineLocations[0]);
-		double thetaY = Math.toDegrees(lineLocations[3] - lineLocations[1]);
+		double thetaY = lineLocations[3] - lineLocations[1];
 		
-		double dThetaX = 90 + thetaX/2 - (thetaX - 180);
-		double dThetaY = 90 + thetaY/2 - (thetaY - 180);
-		
-		double dTheta = (dThetaY + dThetaX)/2;
-		dTheta = Math.toRadians(dTheta);
-		
-		odo.setTheta(odo.getTheta() + dTheta);
+		thetaY = Math.toDegrees(thetaY);
+		double dThetaY = 90 + (thetaY / 2) - thetaY + 180;
+		odo.setTheta(odo.getTheta() + Math.toRadians(dThetaY));
 	}
 	
 }
