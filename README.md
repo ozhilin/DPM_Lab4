@@ -1,4 +1,4 @@
-# DPM: Lab4: Localization
+# DPM Lab4: Localization
 #### ECSE 211: Design Principles and Methods 
 
 ###### Michael Maatouk:	260554267
